@@ -7,6 +7,8 @@ import InitialDescription from "./InitialDescription";
 import Questions from "./Questions";
 import NextButton from "./NextButton";
 import ProgressMain from "./ProgressMain";
+import FinishScreen from "./FinishScreen";
+import Timer from "./Timer";
 
 const initialState = {
   questions: [],
@@ -14,6 +16,8 @@ const initialState = {
   QuestionsIndex: 0,
   answer: null,
   EarnedPoints: 0,
+  Highestscore: 0,
+  RemainingSeconds: null,
 };
 
 function reducer(state, action) {
@@ -23,7 +27,12 @@ function reducer(state, action) {
     case "dataFailed":
       return { ...state, status: "dataFailed" };
     case "active":
-      return { ...state, status: "active" };
+      const SecondsPerQuestion = 30;
+      return {
+        ...state,
+        status: "active",
+        RemainingSeconds: state.questions.length * SecondsPerQuestion,
+      };
     case "clicked":
       return {
         ...state,
@@ -41,13 +50,45 @@ function reducer(state, action) {
         EarnedPoints: GotPoints ? PointsAchieved : state.EarnedPoints,
         answer: null,
       };
+    case "Finished":
+      return {
+        ...state,
+        status: "Finished",
+        Highestscore:
+          state.Highestscore < state.EarnedPoints
+            ? state.EarnedPoints
+            : state.Highestscore,
+      };
+    case "Restart":
+      return {
+        ...state,
+        status: "active",
+        QuestionsIndex: 0,
+        answer: null,
+        EarnedPoints: 0,
+      };
+    case "Timer":
+      return {
+        ...state,
+        RemainingSeconds: state.RemainingSeconds - 1,
+        status: state.RemainingSeconds === 0 ? "Finished" : state.status,
+      };
+
     default:
       throw new Error("Unknown Error");
   }
 }
 function App() {
   const [
-    { questions, status, QuestionsIndex, answer, EarnedPoints },
+    {
+      questions,
+      status,
+      QuestionsIndex,
+      answer,
+      EarnedPoints,
+      Highestscore,
+      RemainingSeconds,
+    },
     dispatch,
   ] = useReducer(reducer, initialState);
 
@@ -78,20 +119,26 @@ function App() {
               EarnedPoints={EarnedPoints}
               answer={answer}
             />
-            <Questions
-              questions={questions}
-              answer={answer}
-              QuestionsIndex={QuestionsIndex}
-              dispatch={dispatch}
-            />
+            <Questions data={{ questions, answer, QuestionsIndex, dispatch }} />
             <NextButton
               dispatch={dispatch}
               answer={answer}
               EarnedPoints={EarnedPoints}
+              numQuestions={numQuestions}
+              QuestionsIndex={QuestionsIndex}
             >
               Next
             </NextButton>
+            <Timer dispatch={dispatch} RemainingSeconds={RemainingSeconds} />
           </>
+        )}
+        {status === "Finished" && (
+          <FinishScreen
+            TotalPoints={TotalPoints}
+            EarnedPoints={EarnedPoints}
+            Highestscore={Highestscore}
+            dispatch={dispatch}
+          />
         )}
       </Main>
     </div>

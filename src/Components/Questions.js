@@ -1,4 +1,6 @@
-function Questions({ questions, QuestionsIndex, dispatch, answer }) {
+function Questions({ data }) {
+  const { questions, answer, QuestionsIndex, dispatch } = data;
+
   return (
     <>
       <h4>{questions[QuestionsIndex].question}</h4>
